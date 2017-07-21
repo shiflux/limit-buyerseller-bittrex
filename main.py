@@ -48,7 +48,7 @@ class LimitBuyer:
                 self.api.cancel(r["OrderUuid"])
 
     def open_order(self, price):
-        response = self.api.get_open_orders(self.market, self.maxquantity, price)
+        response = self.api.buy_limit(self.market, self.maxquantity, price)
         if response["success"]:
             print("Order placed")
         else:
@@ -56,7 +56,6 @@ class LimitBuyer:
 
     def check_open_order(self):
         response = self.api.get_open_orders(self.market)
-        print response
         if len(response["result"]) is 0:
             return False
         else:
