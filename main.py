@@ -20,22 +20,26 @@ class LimitBuyer:
             sleep(self.updatetime)
             currentprice = self.get_current_price()
             if currentprice is None or currentprice >= self.pricelimit:
+                self.cancel_open_orders()
                 print("Price too high", currentprice)
                 continue
 
-            if not self.check_open_order(): #reset if there are no open orders
+            open_ord = self.check_open_order()
+            if open_ord is None:
                 self.orderprice = None
 
-            if self.orderprice is None or self.orderprice < currentprice: #open order
-                if self.orderprice is not None: #cancel order if there are any open
-                    self.cancel_open_orders()
+            elif open_ord < currentprice:
+                self.cancel_open_orders()
+                self.orderprice = None
+
+            if self.orderprice is None: #open order
                 self.orderprice = currentprice + self.stepincrease
                 self.open_order(self.orderprice)
 
     def get_current_price(self):
         response = self.api.get_orderbook(self.market, bt_api.BUY_ORDERBOOK)
         if response["result"] is None:
-            return  None
+            return None
 
         return response["result"][0]["Rate"]
 
@@ -57,6 +61,6 @@ class LimitBuyer:
     def check_open_order(self):
         response = self.api.get_open_orders(self.market)
         if len(response["result"]) is 0:
-            return False
+            return None
         else:
-            return True
+            return response["result"][0]["Limit"]
