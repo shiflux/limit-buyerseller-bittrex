@@ -4,14 +4,14 @@ from time import sleep
 
 class LimitBuyer:
 
-    def __init__(self, market, maxquantuty, pricelimit, stepincrease, apikey, apisecret, updatetime=5):
+    def __init__(self, market, maxquantity, pricelimit, stepincrease, apikey, apisecret, updatetime=5):
         self.market = market
-        self.maxquantity - maxquantuty
+        self.maxquantity = maxquantity
         self.pricelimit = pricelimit
         self.stepincrease = stepincrease
         self.apikey = apikey
         self.apisecret = apisecret
-        self.api = Bittrex(self.apikey, self.api)
+        self.api = Bittrex(self.apikey, self.apisecret)
         self.updatetime = updatetime
         self.orderprice = None
 
@@ -20,6 +20,7 @@ class LimitBuyer:
             sleep(self.updatetime)
             currentprice = self.get_current_price()
             if currentprice is None or currentprice >= self.pricelimit:
+                print("Price too high", currentprice)
                 continue
 
             if not self.check_open_order(): #reset if there are no open orders
@@ -33,7 +34,7 @@ class LimitBuyer:
 
     def get_current_price(self):
         response = self.api.get_orderbook(self.market, bt_api.BUY_ORDERBOOK)
-        if response["response"] is None:
+        if response["result"] is None:
             return  None
 
         return response["result"][0]["Rate"]
@@ -48,13 +49,14 @@ class LimitBuyer:
 
     def open_order(self, price):
         response = self.api.get_open_orders(self.market, self.maxquantity, price)
-        if response["success"] is True:
-            return
+        if response["success"]:
+            print("Order placed")
         else:
             print("Error placing order", response["message"])
 
     def check_open_order(self):
         response = self.api.get_open_orders(self.market)
+        print response
         if len(response["result"]) is 0:
             return False
         else:
