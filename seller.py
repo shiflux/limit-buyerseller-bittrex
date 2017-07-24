@@ -77,7 +77,7 @@ class LimitSeller:
                     return r["Limit"]
 
     def get_balance(self):
-        response = self.api.get_balance("BNT")
+        response = self.api.get_balance(self.market.split('-')[1])
         if response["success"]:
             return response["result"]["Balance"]
         else:
