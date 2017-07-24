@@ -19,13 +19,13 @@ class LimitSeller:
     def start(self):
         while(True):
             sleep(self.updatetime)
-            currentprice = self.get_current_price()
-            if currentprice is None or currentprice <= self.pricelimit:
-                print("Price too low", currentprice)
+            currentorderbook = self.get_order_book()
+            if currentorderbook is None or currentorderbook[0] <= self.pricelimit:
+                print("Price too low", currentorderbook[0])
                 currentorder = self.check_open_order()
                 if currentorder is None:
                     self.open_order(self.pricelimit)
-                elif currentorder == currentprice:
+                elif currentorder == currentorderbook[0]:
                     self.cancel_open_orders()
                 continue
 
@@ -33,20 +33,31 @@ class LimitSeller:
             if open_ord is None:
                 self.orderprice = None
 
-            elif open_ord > currentprice:
+            elif open_ord > currentorderbook[0]:
                 self.cancel_open_orders()
                 self.orderprice = None
 
+            elif open_ord == currentorderbook[0] and currentorderbook[1]-self.stepincrease*2 > open_ord:
+                self.cancel_open_orders()
+                self.orderprice = currentorderbook[1] - self.stepincrease
+                self.open_order(self.orderprice)
+                continue
+
             if self.orderprice is None: #open order
-                self.orderprice = currentprice - self.stepincrease
+                self.orderprice = currentorderbook[0] - self.stepincrease
                 self.open_order(self.orderprice)
 
-    def get_current_price(self):
+    def get_order_book(self):
         response = self.api.get_orderbook(self.market, bt_api.SELL_ORDERBOOK)
         if response["result"] is None:
             return None
 
-        return response["result"][0]["Rate"]
+        toret = []
+        toret.append(response["result"][0]["Rate"])
+        if len(response["result"]) > 1:
+            toret.append(response["result"][1]["Rate"])
+        return toret
+
 
     def cancel_open_orders(self):
         response = self.api.get_open_orders(self.market)
