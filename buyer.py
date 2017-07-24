@@ -60,7 +60,7 @@ class LimitBuyer:
     def open_order(self, price):
         response = self.api.buy_limit(self.market, self.maxquantity, price)
         if response["success"]:
-            print("Order placed")
+            print("Order placed", price)
         else:
             print("Error placing order", response["message"])
 

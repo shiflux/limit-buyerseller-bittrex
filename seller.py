@@ -63,7 +63,7 @@ class LimitSeller:
             buyquantity = self.maxquantity
         response = self.api.sell_limit(self.market, buyquantity, price)
         if response["success"]:
-            print("Order placed")
+            print("Order placed", price)
         else:
             print("Error placing order", response["message"])
 
