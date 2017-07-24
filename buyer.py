@@ -22,8 +22,11 @@ class LimitBuyer:
             currentprice = self.get_current_price()
             if currentprice is None or currentprice >= self.pricelimit:
                 print("Price too high", currentprice)
-                if self.check_open_order() is None:
+                currentorder = self.check_open_order()
+                if currentorder is None:
                     self.open_order(self.pricelimit)
+                elif currentorder == currentprice:
+                    self.cancel_open_orders()
                 continue
 
             open_ord = self.check_open_order()
