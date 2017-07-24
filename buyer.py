@@ -72,3 +72,10 @@ class LimitBuyer:
             for r in response["result"]:
                 if r["OrderType"] == "LIMIT_BUY":
                     return r["Limit"]
+
+    def get_balance(self):
+        response = self.api.get_balance(self.market.split('-')[0])
+        if response["success"]:
+            return response["result"]["Balance"]
+        else:
+            return -1
