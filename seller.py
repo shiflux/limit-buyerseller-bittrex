@@ -3,7 +3,7 @@ from bt_api import Bittrex
 from time import sleep
 
 
-class LimitBuyer:
+class LimitSeller:
 
     def __init__(self, market, maxquantity, pricelimit, stepincrease, apikey, apisecret, updatetime=5):
         self.market = market
@@ -20,8 +20,8 @@ class LimitBuyer:
         while(True):
             sleep(self.updatetime)
             currentprice = self.get_current_price()
-            if currentprice is None or currentprice >= self.pricelimit:
-                print("Price too high", currentprice)
+            if currentprice is None or currentprice <= self.pricelimit:
+                print("Price too low", currentprice)
                 if self.check_open_order() is None:
                     self.open_order(self.pricelimit)
                 continue
@@ -30,16 +30,16 @@ class LimitBuyer:
             if open_ord is None:
                 self.orderprice = None
 
-            elif open_ord < currentprice:
+            elif open_ord > currentprice:
                 self.cancel_open_orders()
                 self.orderprice = None
 
             if self.orderprice is None: #open order
-                self.orderprice = currentprice + self.stepincrease
+                self.orderprice = currentprice - self.stepincrease
                 self.open_order(self.orderprice)
 
     def get_current_price(self):
-        response = self.api.get_orderbook(self.market, bt_api.BUY_ORDERBOOK)
+        response = self.api.get_orderbook(self.market, bt_api.SELL_ORDERBOOK)
         if response["result"] is None:
             return None
 
@@ -51,11 +51,14 @@ class LimitBuyer:
             return
         else:
             for r in response["result"]:
-                if r["OrderType"] == "LIMIT_BUY":
+                if r["OrderType"] == "LIMIT_SELL":
                     self.api.cancel(r["OrderUuid"])
 
     def open_order(self, price):
-        response = self.api.buy_limit(self.market, self.maxquantity, price)
+        buyquantity = self.get_balance()
+        if(buyquantity>self.maxquantity):
+            buyquantity = self.maxquantity
+        response = self.api.sell_limit(self.market, buyquantity, price)
         if response["success"]:
             print("Order placed")
         else:
@@ -67,5 +70,12 @@ class LimitBuyer:
             return None
         else:
             for r in response["result"]:
-                if r["OrderType"] == "LIMIT_BUY":
+                if r["OrderType"] == "LIMIT_SELL":
                     return r["Limit"]
+
+    def get_balance(self):
+        response = self.api.get_balance("BNT")
+        if response["success"]:
+            return response["result"]["Balance"]
+        else:
+            return -1
